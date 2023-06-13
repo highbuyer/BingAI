@@ -7,12 +7,29 @@ Created on Mon Jun 12 23:14:04 2023
 
 from bingai import BingSession  # + 导入BingAI类
 from fastapi import FastAPI, WebSocket, Request, Response
+from pydantic import BaseModel
 
 app = FastAPI()
 
 
-class BingAI(BingSession): # 定义 BingAI 类
-    def __init__(self, email, password): # 定义初始化方法
+class Message(BaseModel):
+    text: str
+
+
+class BingAI(BingSession):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    @app.post("/get_response", response_model=Message)
+    def get_response(self, message: Message) -> Response:
+        data = {"message": message}  # 创建要返回的数据
+        response = Response(content=data, status_code=200,
+                            headers={"X-Custom-Header": "value"})  # 创建 Response 对象，并传入数据和其他参数
+        return response
+
+
+class BingAI(BingSession):  # 定义 BingAI 类
+    def __init__(self, email, password):  # 定义初始化方法
         # 省略一些代码
         super().__init__(email, password)
 
@@ -23,8 +40,9 @@ class BingAI(BingSession): # 定义 BingAI 类
                             headers={"X-Custom-Header": "value"})  # 创建 Response 对象，并传入数据和其他参数
         return response  # 返回 Response 对象
 
+
 class BingAI2(BingAI):  # + 定义BingAI2类，继承自BingAI类
-    def __init__(self,email, password):  # + 重写初始化方法
+    def __init__(self, email, password):  # + 重写初始化方法
         super().__init__(email, password)  # + 调用父类的初始化方法
         self.mode = 'Creative'  # + 设置模式为Creative
         self.max_turns = 100  # + 设置最大回合数为100
