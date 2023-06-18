@@ -8,6 +8,9 @@ Created on Mon Jun 12 23:14:04 2023
 import os
 import sys
 import json
+import threading
+import time
+from fastapi import FastAPI, WebSocket, Request, Response
 import requests
 import speech_recognition as sr  # + 新增语音识别库
 from PIL import Image  # + 新增图像处理库
@@ -21,8 +24,9 @@ from BingAI import BingAI2  # + 新增BingAI2类，继承自BingAI类，添加�
 
 # - bing = BingAI()
 bing = BingAI2("cyhighbuyery@gmail.com", "b1$20/Feb,5")  # + 使用BingAI2类创建对象
-
-
+cookie_json = open("D:\\ProgramData\\highbuyer\\BingAI\\configcookie.json")
+object_json=json.loads(cookie_json.read())
+cookie_json.close()
 def get_text_from_speech():  # + 新增函数，用于从语音文件中获取文本
     r = sr.Recognizer()
     with sr.AudioFile('speech.wav') as source:
@@ -44,11 +48,48 @@ def generate_image_from_text(text):  # + 新增函数，用于从文本中生成
     return '已生成图像'
 
 
-def get_response_from_bing(text):  # + 修改函数，用于从BingAI2对象中获取回复
-    response = bing.get_response(text)
-    if response.startswith('#generative_image'):  # + 如果回复是图像生成请求，调用图像生成函数
-        query = response.split('"')[1]
-        response = generate_image_from_text(query)
+def get_response_from_bing(message):
+    global cookie
+    global bing_url
+    global bing_ws_url
+    global bing_ws
+    global bing_ws_id
+    global bing_ws_msg
+    global bing_ws_lock
+
+    # 如果没有cookie，就先获取cookie
+    if cookie == "":
+
+        cookie = json.dump(object_json)
+
+    # 如果没有WebSocket连接，就先建立连接
+    if bing_ws is None:
+        # 生成WebSocket的URL
+        bing_ws_url = get_websocket_url()
+        # 创建WebSocket对象
+        bing_ws = Websocket.WebSocketApp(bing_ws_url,
+                                         on_open=on_open,
+                                         on_message=on_message,
+                                         on_error=on_error,
+                                         on_close=on_close)
+        # 启动一个新线程运行WebSocket
+        wst = threading.Thread(target=bing_ws.run_forever)
+        wst.daemon = True
+        wst.start()
+        # 等待连接建立成功
+        time.sleep(1)
+
+    # 发送消息给WebSocket服务器
+    bing_ws.send(message)
+
+    # 等待服务器返回响应
+    bing_ws_lock.acquire()
+    while not bing_ws_msg:
+        time.sleep(0.1)
+    response = bing_ws_msg.pop(0)
+    bing_ws_lock.release()
+
+    # 返回响应内容
     return response
 
 
