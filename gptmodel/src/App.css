@@ -1,0 +1,52 @@
+/* App container */
+.App {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 2rem; /* Adjust this value for desired spacing from the top */
+}
+
+/* Checkbox styles */
+p {
+  margin-right: .5rem;
+}
+
+.checkbox-container{
+    display:flex ;
+	align-items:center ;
+	justify-content:center ;
+	margin-bottom :1.5rem ;
+}
+
+/* Stepper styles */
+
+.stepper-container {
+	width :100% ;
+	max-width :600px ;
+	padding-left:.8rem ;
+	padding-right:.8rem ;
+
+}
+.button-nextstep{
+	background-color:#1976d2 ; /* You can change this color as needed */
+	color:white ;
+
+	text-transform :uppercase ;
+	font-weight:bold ;
+
+	padding-left:.8rem ;
+	padding-right:.8rem ;
+
+	border:none;
+
+	cursor:pointer;
+
+	margin-top:auto; /* To make sure that button is at the end of container. */
+
+}
+
+
+.button-nextstep:focus,
+input:focus{
+	outline:none !important;
+}
